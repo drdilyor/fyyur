@@ -272,6 +272,7 @@ def create_venue_submission():
             genres=form.genres.data,
             facebook_link=form.facebook_link.data,
             website=form.website.data,
+            seeking_description=form.seeking_description.data,
         )
         db.session.add(v)
         db.session.commit()
@@ -484,16 +485,41 @@ def create_artist_form():
 
 @app.route('/artists/create', methods=['POST'])
 def create_artist_submission():
+    form = ArtistForm(request.form)
+
+    if not form.validate_on_submit():
+        flash('Invalid form!')
+        return render_template('forms/new_artist.html', form=form)
+
+    try:
+        a = Artist(
+            name=form.name.data,
+            city=form.city.data,
+            state=form.state.data,
+            phone=form.phone.data,
+            image_link=form.image_link.data,
+            genres=form.genres.data,
+            facebook_link=form.facebook_link.data,
+            seeking_description=form.seeking_description.data,
+        )
+        db.session.add(a)
+        db.session.commit()
+        flash('Artist ' + request.form['name'] + ' was successfully listed!')
+        return redirect(url_for('index'))
+
+    except Exception:
+        db.session.rollback()
+        flash("An error occured!")
+        return redirect(url_for('index'))
+    finally:
+        db.session.close()
     # called upon submitting the new artist listing form
-    # TODO: insert form data as a new Venue record in the db, instead
-    # TODO: modify data to be the data object returned from db insertion
+    # DONE: insert form data as a new Venue record in the db, instead
+    # DONE: modify data to be the data object returned from db insertion
 
     # on successful db insert, flash success
-    flash('Artist ' + request.form['name'] + ' was successfully listed!')
-    # TODO: on unsuccessful db insert, flash an error instead.
+    # DONE: on unsuccessful db insert, flash an error instead.
     # e.g., flash('An error occurred. Artist ' + data.name + ' could not be listed.')
-    return render_template('pages/home.html')
-
 
 #  Shows
 #  ----------------------------------------------------------------
