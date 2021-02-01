@@ -115,29 +115,34 @@ def index():
 
 @app.route('/venues')
 def venues():
-    # TODO: replace with real venues data.
+    # DONE: replace with real venues data.
     #       num_shows should be aggregated based on number of upcoming shows per venue.
-    data = [{
-        "city": "San Francisco",
-        "state": "CA",
-        "venues": [{
-            "id": 1,
-            "name": "The Musical Hop",
-            "num_upcoming_shows": 0,
-        }, {
-            "id": 3,
-            "name": "Park Square Live Music & Coffee",
-            "num_upcoming_shows": 1,
-        }]
-    }, {
-        "city": "New York",
-        "state": "NY",
-        "venues": [{
-            "id": 2,
-            "name": "The Dueling Pianos Bar",
-            "num_upcoming_shows": 0,
-        }]
-    }]
+    # Sorry future me, I can't explain how does it work
+    venues: List[Venue] = Venue.query.all()
+    locations = {}
+
+    for v in venues:
+        lc = (v.city, v.state)
+        if lc in locations:
+            locations[lc].append(v)
+        else:
+            locations[lc] = [v]
+
+    data = []
+    for lc, venues in sorted(locations.items()):
+        data.append({
+            "city": lc[0],
+            "state": lc[1],
+            "venues": [{
+                "id": v.id,
+                "name": v.name,
+                # we don't need this, do we?
+                # "num_upcoming_shows": Show.query.filter(
+                #     Show.venue_id == v.id,
+                #     Show.start_time > datetime.now()
+                # ).count()
+            } for v in venues]
+        })
     return render_template('pages/venues.html', areas=data);
 
 
@@ -586,6 +591,7 @@ def create_show_submission():
     except Exception:
         db.session.rollback()
         flash("An error occured!")
+        raise
         return redirect(url_for('index'))
     finally:
         db.session.close()
