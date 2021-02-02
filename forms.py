@@ -89,7 +89,6 @@ class VenueForm(FlaskForm):
         'image_link'
     )
     genres = SelectMultipleField(
-        # TODO implement enum restriction
         'genres', validators=[DataRequired()],
         choices=[
             ('Alternative', 'Alternative'),
@@ -187,14 +186,12 @@ class ArtistForm(FlaskForm):
         ]
     )
     phone = StringField(
-        # TODO implement validation logic for state
         'phone'
     )
     image_link = StringField(
         'image_link'
     )
     genres = SelectMultipleField(
-        # TODO implement enum restriction
         'genres', validators=[DataRequired()],
         choices=[
             ('Alternative', 'Alternative'),
@@ -222,11 +219,10 @@ class ArtistForm(FlaskForm):
         'website', validators=[URL()]
     )
     facebook_link = StringField(
-        # TODO implement enum restriction
         'facebook_link', validators=[URL()]
     )
     seeking_description = StringField(
         'seeking_description'
     )
 
-# TODO IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
+# DONE IMPLEMENT NEW ARTIST FORM AND NEW SHOW FORM
