@@ -110,6 +110,7 @@ app.jinja_env.filters['datetime'] = format_datetime
 @app.route('/')
 def index():
     # recent venues
+    # https://stackoverflow.com/questions/4186062/sqlalchemy-order-by-descending
     rv = [{
         "id": v.id,
         "name": v.name,
