@@ -303,7 +303,7 @@ def show_artist(artist_id):
         "state": a.state,
         "phone": a.phone,
         "facebook_link": a.facebook_link,
-        "seeking_talent": bool(a.seeking_description),
+        "seeking_venue": bool(a.seeking_description),
         "seeking_description": a.seeking_description,
         "image_link": a.image_link,
     }
@@ -321,29 +321,29 @@ def show_artist(artist_id):
 #  ----------------------------------------------------------------
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
-    form = ArtistForm()
-    artist = {
-        "id": 4,
-        "name": "Guns N Petals",
-        "genres": ["Rock n Roll"],
-        "city": "San Francisco",
-        "state": "CA",
-        "phone": "326-123-5000",
-        "website": "https://www.gunsnpetalsband.com",
-        "facebook_link": "https://www.facebook.com/GunsNPetals",
-        "seeking_venue": True,
-        "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-        "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-    }
-    # TODO: populate form with fields from artist with ID <artist_id>
+    artist = Artist.query.get(artist_id)
+    form = ArtistForm(obj=artist)
+    # DONE: populate form with fields from artist with ID <artist_id>
     return render_template('forms/edit_artist.html', form=form, artist=artist)
 
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-    # TODO: take values from the form submitted, and update existing
+    # DONE: take values from the form submitted, and update existing
     # artist record with ID <artist_id> using the new attributes
-
+    artist = Artist.query.get(artist_id)
+    form = ArtistForm(obj=artist)
+    if not form.validate_on_submit():
+        flash("Invalid form!")
+        print(form.errors)
+        return render_template('forms/edit_artist.html', form=form, artist=artist)
+    try:
+        form.populate_obj(artist)
+        db.session.commit()
+        flash("Artist is succesfully edited")
+    except Exception:
+        db.session.rollback()
+        flash("An error occured!")
     return redirect(url_for('show_artist', artist_id=artist_id))
 
 
@@ -357,8 +357,20 @@ def edit_venue(venue_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-    # TODO: take values from the form submitted, and update existing
+    # DONE: take values from the form submitted, and update existing
     # venue record with ID <venue_id> using the new attributes
+    venue = Venue.query.get(venue_id)
+    form = VenueForm(request.form, obj=venue)
+    if not form.validate_on_submit():
+        flash("Invalid form!")
+        return render_template('forms/edit_venue.html', form=form, venue=venue)
+    try:
+        form.populate_obj(venue)
+        db.session.commit()
+        flash("Venue is succesfully edited")
+    except Exception:
+        db.session.rollback()
+        flash("An error occured!")
     return redirect(url_for('show_venue', venue_id=venue_id))
 
 
