@@ -7,7 +7,7 @@ from typing import List
 
 import dateutil.parser
 import babel
-from flask import Flask, render_template, request, Response, flash, redirect, url_for
+from flask import Flask, render_template, request, Response, flash, redirect, url_for, jsonify
 from flask_moment import Moment
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -46,7 +46,8 @@ class Venue(db.Model):
 
     # DONE: implement any missing fields, as a database migration using Flask-Migrate
     genres = db.Column(db.ARRAY(db.String(120)))  # noqa
-    shows = db.relationship('Show', backref='venue', lazy=True)  # noqa
+    shows = db.relationship('Show', backref='venue',
+        lazy=True, cascade='all, delete-orphan')  # noqa
     seeking_description = db.Column(db.String(120), nullable=True)  # noqa
     website = db.Column(db.String(120))  # noqa
 
@@ -66,7 +67,8 @@ class Artist(db.Model):
 
     # DONE: implement any missing fields, as a database migration using Flask-Migrate
     genres = db.Column(db.ARRAY(db.String(120)))  # noqa
-    shows = db.relationship('Show', backref='artist', lazy=True)  # noqa
+    shows = db.relationship('Show', backref='artist',
+        lazy=True, cascade='all, delete-orphan')  # noqa
     seeking_description = db.Column(db.String(120), nullable=True)  # noqa
     website = db.Column(db.String(120))  # noqa
 
@@ -148,8 +150,8 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
-    # seach for Hop should return "The Musical Hop".
+    # DONE: implement search on artists with partial string search. Ensure it is case-insensitive.
+    # search for Hop should return "The Musical Hop".
     # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
     if request.form.get("search_term"):
         # https://stackoverflow.com/questions/42579400/search-function-query-in-flask-sqlalchemy
@@ -251,7 +253,7 @@ def create_venue_submission():
 
     except Exception:
         db.session.rollback()
-        flash("An error occured!")
+        flash("An error occurred!")
         return redirect(url_for('index'))
     finally:
         db.session.close()
@@ -265,12 +267,23 @@ def create_venue_submission():
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-    # TODO: Complete this endpoint for taking a venue_id, and using
+    # DONE: Complete this endpoint for taking a venue_id, and using
     # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+    try:
+        v = Venue.query.get(venue_id)
+        db.session.delete(v)
+        db.session.commit()
+        return jsonify({'success': True})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False})
+
+    finally:
+        db.session.close()
 
     # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
     # clicking that button delete it from the db then redirect the user to the homepage
-    return None
 
 
 #  Artists
@@ -357,15 +370,14 @@ def edit_artist_submission(artist_id):
     form = ArtistForm(obj=artist)
     if not form.validate_on_submit():
         flash("Invalid form!")
-        print(form.errors)
         return render_template('forms/edit_artist.html', form=form, artist=artist)
     try:
         form.populate_obj(artist)
         db.session.commit()
-        flash("Artist is succesfully edited")
+        flash("Artist is successfully edited")
     except Exception:
         db.session.rollback()
-        flash("An error occured!")
+        flash("An error occurred!")
     return redirect(url_for('show_artist', artist_id=artist_id))
 
 
@@ -389,10 +401,10 @@ def edit_venue_submission(venue_id):
     try:
         form.populate_obj(venue)
         db.session.commit()
-        flash("Venue is succesfully edited")
+        flash("Venue is successfully edited")
     except Exception:
         db.session.rollback()
-        flash("An error occured!")
+        flash("An error occurred!")
     return redirect(url_for('show_venue', venue_id=venue_id))
 
 
@@ -431,7 +443,7 @@ def create_artist_submission():
 
     except Exception:
         db.session.rollback()
-        flash("An error occured!")
+        flash("An error occurred!")
         return redirect(url_for('index'))
     finally:
         db.session.close()
@@ -474,11 +486,9 @@ def create_shows():
 def create_show_submission():
     data = request.form
     form = ShowForm(data)
-    print(request.form)
 
     if not form.validate_on_submit():
         flash('Invalid form!')
-        print(form.errors)
         return render_template('forms/new_show.html', form=form)
 
     try:
@@ -494,8 +504,7 @@ def create_show_submission():
 
     except Exception:
         db.session.rollback()
-        flash("An error occured!")
-        raise
+        flash("An error occurred!")
         return redirect(url_for('index'))
     finally:
         db.session.close()
